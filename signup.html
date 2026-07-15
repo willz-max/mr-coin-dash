@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — MR COIN</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #172f56;
+      --blue-light: #60a5fa;
+      --blue-dim: rgba(59,130,246,.1);
+      --blue-border: rgba(59,130,246,.2);
+      --green: #16a34a;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --bg2: #f8f9fa;
+      --card-border: #e5e7eb;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      background-color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1, h2, h3, h4, h5 { font-family: 'Poppins', sans-serif; }
+
+    /* ── LOADER ── */
+    #loader {
+      position: fixed; inset: 0; background: #fff;
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      transition: opacity .5s ease;
+    }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+    .loader-logo {
+      font-family: 'Poppins', sans-serif; font-size: 2.4rem; font-weight: 800;
+      color: var(--blue); letter-spacing: 3px;
+      animation: blink-pulse 1s ease-in-out infinite;
+    }
+    @keyframes blink-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── NAVBAR ── */
+    #navbar {
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 1050; width: calc(100% - 40px); max-width: 1100px;
+      background: rgba(255,255,255,.96); backdrop-filter: blur(18px);
+      border: 1px solid var(--card-border); border-radius: 100px;
+      padding: 6px 24px;
+      box-shadow: 0 2px 20px rgba(0,0,0,.07);
+    }
+
+    .navbar-logo img {
+      height: 60px; width: auto; object-fit: contain;
+    }
+
+    .btn-nav-cta {
+      background: var(--blue); color: #fff !important;
+      font-weight: 700 !important; border-radius: 100px !important;
+      padding: 8px 20px !important; font-size: .87rem !important;
+      transition: background .2s, transform .2s;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .btn-nav-cta:hover { background: var(--blue-light); transform: translateY(-1px); }
+
+    /* ── CONTENT SECTION ── */
+    .signup-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 140px;
+      padding-bottom: 60px;
+      position: relative;
+    }
+
+    .page-watermark-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .page-watermark-bg img {
+      width: 65vw;
+      max-width: 900px;
+      height: auto;
+      opacity: 0.10; 
+      object-fit: contain;
+    }
+
+    /* ── AUTH CARD ── */
+    .auth-card {
+      background: #fff; 
+      border: 1px solid var(--card-border);
+      border-radius: 22px; 
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 4px 30px rgba(0,0,0,.05);
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-input-group { position: relative; }
+    .auth-icon-prefix {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--blue); font-size: 1rem; pointer-events: none;
+    }
+    .auth-input {
+      width: 100%; background: #f0f1f3; border: 1.5px solid var(--card-border);
+      border-radius: 12px; padding: 13px 14px 13px 44px;
+      font-size: 0.95rem; font-weight: 500; font-family:'Inter',sans-serif;
+      color: var(--text); outline: none; transition: all .2s;
+    }
+    .auth-input:focus { border-color: var(--blue); background: #fff; }
+
+    .btn-primary-custom {
+      background: var(--blue); color: #fff;
+      border-radius: 100px; padding: 13px 28px; font-weight: 700;
+      font-size: .95rem; border: none; display: inline-flex;
+      align-items: center; gap: 8px; text-decoration: none;
+      transition: background .2s, transform .2s;
+    }
+    .btn-primary-custom:hover { background: var(--blue-light); transform: translateY(-2px); color: #fff; }
+
+    .form-label {
+      font-size: .8rem;
+      color: var(--muted);
+      letter-spacing: .5px;
+    }
+
+    .auth-footer-text {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .auth-footer-text a {
+      color: var(--blue);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .auth-footer-text a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── ENTRANCE REVEAL TRANSITION ── */
+    [data-reveal] {
+      opacity: 0;
+      transition: opacity 0.7s ease, transform 0.7s ease;
+      transform: translateY(32px);
+    }
+    [data-reveal].revealed {
+      opacity: 1;
+      transform: none !important;
+    }
+
+    @media (max-width: 767px) {
+      .auth-card { padding: 30px 20px; }
+      .signup-wrapper { padding-top: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">MR COIN</div>
+</div>
+
+<nav id="navbar" class="navbar">
+  <div class="container-fluid px-0 d-flex justify-content-between align-items-center">
+    <a href="index.html" class="navbar-logo">
+      <img src="/assets/logo.png" alt="Mr Coin Logo" />
+    </a>
+    <a class="btn-nav-cta" href="index.html">Back to Home</a>
+  </div>
+</nav>
+
+<div class="signup-wrapper">
+  <div class="page-watermark-bg">
+    <img src="/assets/logo.png" alt="Mr Coin Watermark Layer" />
+  </div>
+
+  <div class="container d-flex justify-content-center">
+    <div class="auth-card" data-reveal="up">
+      
+      <div class="text-center mb-4">
+        <h3 class="fw-800 mb-1" style="color: var(--blue);">Create Account</h3>
+        <p class="text-muted small">Join thousands trading securely at market-beating rates.</p>
+      </div>
+
+      <form id="signupForm" onsubmit="return validatePasswords(event)">
+        <div class="mb-3">
+          <label class="form-label fw-600 text-uppercase">Full Name</label>
+          <div class="auth-input-group">
+            <span class="auth-icon-prefix"><i class="fas fa-user"></i></span>
+            <input type="text" class="auth-input" placeholder="John Doe" required autocomplete="name" />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-600 text-uppercase">Email Address</label>
+          <div class="auth-input-group">
+            <span class="auth-icon-prefix"><i class="fas fa-envelope"></i></span>
+            <input type="email" class="auth-input" placeholder="name@example.com" required autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-600 text-uppercase">Password</label>
+          <div class="auth-input-group">
+            <span class="auth-icon-prefix"><i class="fas fa-lock"></i></span>
+            <input type="password" id="userPassword" class="auth-input" placeholder="Minimum 8 characters" required autocomplete="new-password" />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-600 text-uppercase">Confirm Password</label>
+          <div class="auth-input-group">
+            <span class="auth-icon-prefix"><i class="fas fa-shield-alt"></i></span>
+            <input type="password" id="confirmPassword" class="auth-input" placeholder="Re-type your password" required autocomplete="new-password" />
+          </div>
+          <div id="passwordError" class="text-danger mt-2 small fw-600 d-none"></div>
+        </div>
+
+        <div class="mb-4 d-flex align-items-start">
+          <input type="checkbox" class="form-check-input mt-1 me-2 shadow-none" id="agreeTerms" style="border-color: var(--card-border); cursor: pointer;" required />
+          <label class="form-check-label text-muted small" for="agreeTerms" style="cursor: pointer; font-size: 0.85rem; line-height: 1.4;">
+            I agree to the <a href="#" style="color: var(--blue); font-weight: 600; text-decoration: none;">Terms of Service</a> and <a href="#" style="color: var(--blue); font-weight: 600; text-decoration: none;">Privacy Policy</a>.
+          </label>
+        </div>
+
+        <button type="submit" class="btn-primary-custom w-100 justify-content-center mb-4">
+          <i class="fas fa-user-plus"></i> Register Account
+        </button>
+      </form>
+
+      <div class="text-center auth-footer-text">
+        Already have an account? <a href="login.html">Log In</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Hide preloader layer on document initialization complete
+  window.addEventListener('load', () => {
+    setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
+  });
+
+  // Structural Entrance Animation Handler
+  window.addEventListener('DOMContentLoaded', () => {
+    const card = document.querySelector('[data-reveal]');
+    if(card) {
+      setTimeout(() => card.classList.add('revealed'), 200);
+    }
+  });
+
+  // Custom Dual-Confirmation Password Match Function
+  function validatePasswords(event) {
+    const password = document.getElementById('userPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const errorDiv = document.getElementById('passwordError');
+
+    // 1. Check for basic character length requirement
+    if (password.length < 8) {
+      event.preventDefault(); // Block form submission
+      errorDiv.innerText = "❌ Password must be at least 8 characters long.";
+      errorDiv.classList.remove('d-none');
+      return false;
+    }
+
+    // 2. Perform validation verification matching rule
+    if (password !== confirmPassword) {
+      event.preventDefault(); // Block form submission
+      errorDiv.innerText = "❌ Passwords do not match. Please double check.";
+      errorDiv.classList.remove('d-none');
+      return false;
+    }
+
+    // Success condition: clear alerts and allow submit processing context
+    errorDiv.classList.add('d-none');
+    return true;
+  }
+</script>
+
+</body>
+</html>

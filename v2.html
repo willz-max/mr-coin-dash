@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Dashboard — MR COIN</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #172f56;
+      --blue-light: #60a5fa;
+      --blue-dim: rgba(59,130,246,.1);
+      --blue-border: rgba(59,130,246,.2);
+      --green: #16a34a;
+      --green-dim: rgba(22,163,74,.1);
+      --red: #dc2626;
+      --red-dim: rgba(220,38,38,.08);
+      --amber: #d97706;
+      --amber-dim: rgba(217,119,6,.1);
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --bg2: #f8f9fa;
+      --card-border: #e5e7eb;
+
+      /* spacing rhythm, used to keep vertical spacing consistent site-wide */
+      --space-xs: 8px;
+      --space-sm: 14px;
+      --space-md: 22px;
+      --space-lg: 32px;
+      --space-xl: 44px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      background-color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, h5 { font-family: 'Poppins', sans-serif; }
+
+    ::selection { background: var(--blue-dim); color: var(--blue); }
+
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--blue-light);
+      outline-offset: 2px;
+    }
+
+    /* ── LOADER ── */
+    #loader {
+      position: fixed; inset: 0; background: #fff;
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      transition: opacity .5s ease;
+    }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+    .loader-logo {
+      font-family: 'Poppins', sans-serif; font-size: 2.4rem; font-weight: 800;
+      color: var(--blue); letter-spacing: 3px;
+      animation: blink-pulse 1s ease-in-out infinite;
+    }
+    @keyframes blink-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── NAVBAR ── */
+    #navbar {
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 1050; width: calc(100% - 40px); max-width: 1100px;
+      background: rgba(255,255,255,.96); backdrop-filter: blur(18px);
+      border: 1px solid var(--card-border); border-radius: 100px;
+      padding: 6px 24px;
+      box-shadow: 0 2px 20px rgba(0,0,0,.07);
+      transition: box-shadow .25s ease;
+    }
+    .navbar-logo img { height: 60px; width: auto; object-fit: contain; }
+
+    .btn-nav-cta {
+      background: var(--blue); color: #fff !important;
+      font-weight: 700 !important; border-radius: 100px !important;
+      padding: 8px 20px !important; font-size: .87rem !important;
+      transition: background .2s, transform .2s;
+      display: inline-block; text-decoration: none;
+    }
+    .btn-nav-cta:hover { background: var(--blue-light); transform: translateY(-1px); }
+
+    /* ── MAIN LAYOUT ── */
+    .dashboard-wrapper {
+      flex: 1;
+      padding-top: 130px;
+      padding-bottom: 70px;
+    }
+
+    .page-heading { margin-bottom: var(--space-lg); }
+    .page-heading h4 { font-weight: 800; letter-spacing: -.3px; margin-bottom: 2px; }
+    .page-heading p { color: var(--muted); font-size: .92rem; margin: 0; }
+
+    /* ── REUSABLE CARDS ── */
+    .custom-card {
+      background: #fff;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: var(--space-lg);
+      box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+      transition: box-shadow .25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .custom-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
+
+    /* Every card starts with the same eyebrow + title (+ optional right-aligned meta) header,
+       so the three cards on this page read as one consistent system. */
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+    .card-eyebrow {
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--blue-light);
+      margin-bottom: 6px;
+    }
+    .card-title { font-weight: 800; margin-bottom: 2px; }
+    .card-subtitle { color: var(--muted); font-size: .85rem; margin: 0; }
+
+    /* Divides a card into distinct sections (e.g. core fields vs. payout details)
+       without needing a full card-per-section. */
+    .card-section {
+      padding-top: var(--space-md);
+      margin-top: var(--space-md);
+      border-top: 1px solid var(--card-border);
+    }
+    .card-section:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+
+    /* ── TRANSACTION TYPE TABS ── */
+    .tx-tabs {
+      display: flex;
+      background: var(--bg2);
+      padding: 6px;
+      border-radius: 12px;
+      margin-bottom: var(--space-lg);
+      border: 1px solid var(--card-border);
+    }
+    .tx-tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 12px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border-radius: 8px;
+      color: var(--muted);
+      transition: all 0.2s ease;
+    }
+    .tx-tab-btn:hover:not(.active) { color: var(--text); }
+    .tx-tab-btn.active {
+      background: #fff;
+      color: var(--blue);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    /* ── INPUT FIELDS ── */
+    .field-group { margin-bottom: var(--space-sm); }
+    .field-group:last-child { margin-bottom: 0; }
+
+    .input-label {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+    .custom-select, .custom-input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1.5px solid var(--card-border);
+      border-radius: 12px;
+      padding: 13px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+      color: var(--text);
+      transition: all 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .custom-select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    .custom-select:focus, .custom-input:focus { border-color: var(--blue); background-color: #fff; }
+    .custom-select::placeholder, .custom-input::placeholder { color: #9ca3af; font-weight: 500; }
+    .custom-input:disabled, .custom-select:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* Amount field with an inline currency suffix (e.g. "USDT") */
+    .amount-field { position: relative; }
+    .amount-field .custom-input { padding-right: 74px; }
+    .amount-field-suffix {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      font-weight: 700; color: var(--muted); font-size: .88rem; pointer-events: none;
+    }
+
+    #bankDetailsSection { transition: opacity .25s ease; }
+    .bank-section-label {
+      font-size: .72rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--blue-light); margin-bottom: var(--space-sm);
+    }
+
+    .btn-submit-tx {
+      background: var(--blue);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      border-radius: 100px;
+      padding: 15px;
+      font-size: 1rem;
+      letter-spacing: .2px;
+      transition: all 0.2s;
+    }
+    .btn-submit-tx:hover { background: var(--blue-light); transform: translateY(-1px); box-shadow: 0 6px 18px var(--blue-dim); }
+    .btn-submit-tx:active { transform: translateY(0); }
+
+    .settlement-box {
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    /* ── PROGRESS TRACKER ── */
+    .status-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .tracker-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      padding-left: 22px;
+    }
+    .tracker-line {
+      position: absolute;
+      top: 10px;
+      left: 8px;
+      bottom: 10px;
+      width: 3px;
+      background: var(--card-border);
+      z-index: 1;
+      border-radius: 3px;
+    }
+    .tracker-step {
+      position: relative;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      z-index: 2;
+    }
+    .step-dot {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #e5e7eb;
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px #e5e7eb;
+      transition: all 0.3s;
+    }
+    .step-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .tracker-step.completed .step-dot { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
+    .tracker-step.completed .step-text { color: var(--text); font-weight: 600; }
+    .tracker-step.active .step-dot {
+      background: var(--blue-light);
+      box-shadow: 0 0 0 2px var(--blue-light);
+      animation: pulse-dot 1.5s infinite;
+    }
+    .tracker-step.active .step-text { color: var(--blue); font-weight: 700; }
+
+    @keyframes pulse-dot {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    /* QR Code Display Frame */
+    .qr-box {
+      border: 1px dashed var(--blue-border);
+      background: var(--bg2);
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+    }
+    .qr-box img { border-radius: 8px; background: #fff; padding: 6px; border: 1px solid var(--card-border); }
+    .qr-box .input-label { text-align: center; }
+
+    /* ── TRANSACTION HISTORY ── */
+    .tx-count-badge {
+      background: var(--blue-dim);
+      color: var(--blue);
+      font-weight: 700;
+      font-size: .8rem;
+      padding: 8px 16px;
+      border-radius: 100px;
+    }
+
+    .tx-history-table thead th {
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      border-bottom: 1.5px solid var(--card-border);
+      padding: 12px 14px;
+      white-space: nowrap;
+    }
+    .tx-history-table tbody td {
+      padding: 16px 14px;
+      font-size: .9rem;
+      font-weight: 600;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .tx-history-table tbody tr:last-child td { border-bottom: none; }
+    .tx-history-table tbody tr { transition: background .15s ease; }
+    .tx-history-table tbody tr:hover { background: var(--bg2); }
+
+    .tx-date-primary { font-weight: 700; color: var(--text); }
+    .tx-date-secondary { font-weight: 500; color: var(--muted); font-size: .78rem; }
+
+    .type-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 100px;
+      font-size: .78rem; font-weight: 700;
+    }
+    .type-pill.buy { background: var(--green-dim); color: var(--green); }
+    .type-pill.sell { background: var(--red-dim); color: var(--red); }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 100px;
+      font-size: .78rem; font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-pill.pending { background: var(--amber-dim); color: var(--amber); }
+    .status-pill.pending .dot { background: var(--amber); }
+    .status-pill.processing { background: var(--blue-dim); color: var(--blue-light); }
+    .status-pill.processing .dot { background: var(--blue-light); }
+    .status-pill.completed { background: var(--green-dim); color: var(--green); }
+    .status-pill.completed .dot { background: var(--green); }
+
+    .tx-empty-state { padding: 56px 20px; text-align: center; color: var(--muted); }
+    .tx-empty-state i { font-size: 2.2rem; color: #d1d5db; margin-bottom: 14px; display: block; }
+    .tx-empty-state p { font-size: .88rem; max-width: 360px; margin: 0 auto; }
+
+    .status-tracker-empty { padding: 40px 20px; text-align: center; color: var(--muted); margin: auto 0; }
+    .status-tracker-empty i { font-size: 2rem; color: #d1d5db; margin-bottom: 14px; display: block; }
+    .status-tracker-empty p { font-size: .85rem; max-width: 300px; margin: 0 auto; }
+
+    @media (max-width: 991px) {
+      .dashboard-wrapper { padding-top: 110px; }
+      .custom-card { padding: 24px; }
+    }
+    @media (max-width: 575px) {
+      .tx-history-table thead th:nth-child(1),
+      .tx-history-table tbody td:nth-child(1) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">MR COIN</div>
+</div>
+
+<nav id="navbar" class="navbar">
+  <div class="container-fluid px-0 d-flex justify-content-between align-items-center">
+    <a href="index.html" class="navbar-logo">
+      <img src="./assets/logo.png" alt="Mr Coin Logo" />
+    </a>
+    <a class="btn-nav-cta" href="index.html"><i class="fas fa-sign-out-alt me-1"></i> Sign Out</a>
+  </div>
+</nav>
+
+<div class="dashboard-wrapper">
+  <div class="container">
+
+    <div class="page-heading">
+      <h4>Welcome back</h4>
+      <p>Buy or sell crypto for Naira, and track every transaction from one place.</p>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+
+      <!-- ═══ Exchange form ═══ -->
+      <div class="col-lg-7">
+        <div class="custom-card h-100">
+
+          <div class="card-header-row">
+            <div>
+              <div class="card-eyebrow">Exchange</div>
+              <h5 class="card-title mb-0">Buy or sell crypto</h5>
+            </div>
+          </div>
+
+          <div class="tx-tabs">
+            <button class="tx-tab-btn active" id="tabBuy" onclick="switchMode('BUY')">
+              <i class="fas fa-arrow-down me-2 text-success"></i>Buy Crypto to Naira
+            </button>
+            <button class="tx-tab-btn" id="tabSell" onclick="switchMode('SELL')">
+              <i class="fas fa-arrow-up me-2 text-danger"></i>Sell Crypto to Naira
+            </button>
+          </div>
+
+          <form id="txForm" onsubmit="initiateExchange(event)">
+
+            <!-- Section 1: what & how much -->
+            <div class="card-section">
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <div class="field-group">
+                    <label class="input-label">Asset</label>
+                    <select class="custom-select" id="cryptoAsset" onchange="updateLimits()">
+                      <option value="USDT">Tether (USDT) — TRC20</option>
+                      <option value="BTC">Bitcoin (BTC)</option>
+                      <option value="ETH">Ethereum (ETH)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-7">
+                  <div class="field-group">
+                    <label class="input-label" id="amountLabel">Crypto Amount to Send</label>
+                    <div class="amount-field">
+                      <input type="number" step="any" min="0" class="custom-input" id="cryptoAmount" placeholder="0.00" required oninput="calculateOutputs()" />
+                      <span class="amount-field-suffix" id="assetTicker">USDT</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settlement-box mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-muted small fw-600">Estimated Settlement Receive:</span>
+                  <span class="fw-800 text-success fs-5" id="fiatOutput">₦0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: payout destination (Sell only) -->
+            <div class="card-section" id="bankDetailsSection">
+              <div class="bank-section-label">Naira Settlement Bank Payout Account</div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="field-group">
+                    <select class="custom-select" id="bankName" required>
+                      <option value="" disabled selected>Select Bank Name</option>
+                      <option>Access Bank</option>
+                      <option>Citibank Nigeria</option>
+                      <option>Ecobank Nigeria</option>
+                      <option>Fidelity Bank</option>
+                      <option>First Bank of Nigeria</option>
+                      <option>First City Monument Bank (FCMB)</option>
+                      <option>Globus Bank</option>
+                      <option>Guaranty Trust Bank (GTBank)</option>
+                      <option>Heritage Bank</option>
+                      <option>Keystone Bank</option>
+                      <option>Kuda Bank</option>
+                      <option>Moniepoint MFB</option>
+                      <option>Opay (Paycom)</option>
+                      <option>PalmPay</option>
+                      <option>Polaris Bank</option>
+                      <option>Providus Bank</option>
+                      <option>Stanbic IBTC Bank</option>
+                      <option>Standard Chartered Bank</option>
+                      <option>Sterling Bank</option>
+                      <option>SunTrust Bank</option>
+                      <option>Union Bank of Nigeria</option>
+                      <option>United Bank for Africa (UBA)</option>
+                      <option>Unity Bank</option>
+                      <option>Wema Bank</option>
+                      <option>Zenith Bank</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="field-group">
+                    <input type="text" inputmode="numeric" class="custom-input" id="accountNumber" placeholder="Account Number (10 digits)" maxlength="10" required />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: submit -->
+            <div class="card-section">
+              <button type="submit" class="btn-submit-tx w-100">
+                <i class="fas fa-bolt me-2"></i>Initiate Transaction Process
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+      <!-- ═══ Status tracker ═══ -->
+      <div class="col-lg-5">
+        <div class="custom-card h-100">
+
+          <div class="card-header-row">
+            <div>
+              <div class="card-eyebrow">Live Status</div>
+              <h5 class="card-title mb-0" id="statusCardTitle">Transaction Status</h5>
+              <p class="card-subtitle">Real-time status monitor of your requested asset swap.</p>
+            </div>
+          </div>
+
+          <div class="status-card-body">
+
+            <div id="emptyTrackerState" class="status-tracker-empty">
+              <i class="fas fa-receipt"></i>
+              <p>No active transactions right now. Fill out the form on the left to generate a payment QR code and start tracking.</p>
+            </div>
+
+            <div id="activeTrackerSection" class="d-none my-auto">
+
+              <div class="tracker-container mb-4">
+                <div class="tracker-line"></div>
+
+                <div class="tracker-step" id="stateStep1">
+                  <div class="step-dot"></div>
+                  <div class="step-text">1. Order Initiated & Pending Payment</div>
+                </div>
+                <div class="tracker-step" id="stateStep2">
+                  <div class="step-dot"></div>
+                  <div class="step-text">2. Mempool Verification / Processing</div>
+                </div>
+                <div class="tracker-step" id="stateStep3">
+                  <div class="step-dot"></div>
+                  <div class="step-text">3. Payout Execution Processed</div>
+                </div>
+                <div class="tracker-step" id="stateStep4">
+                  <div class="step-dot"></div>
+                  <div class="step-text">4. Completed / Settled Successfully</div>
+                </div>
+              </div>
+
+              <div class="qr-box mt-2" id="qrContainerBlock">
+                <label class="input-label d-block text-center mb-2">Scan QR Code To Pay Address</label>
+                <img src="" id="paymentQR" alt="Dynamic Crypto Payment Collection QR Code" style="width:150px; height:150px;" class="mb-2" />
+                <div class="small font-monospace bg-white p-2 border rounded text-break" id="walletAddressText" style="font-size:0.78rem;"></div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ History ═══ -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="custom-card">
+          <div class="card-header-row mb-0">
+            <div>
+              <div class="card-eyebrow">Activity</div>
+              <h5 class="card-title mb-0">Transaction History</h5>
+            </div>
+            <span class="tx-count-badge" id="txCountBadge">0 transactions</span>
+          </div>
+
+          <div class="card-section">
+            <div id="txHistoryEmpty" class="tx-empty-state">
+              <i class="fas fa-clock-rotate-left"></i>
+              <p>Your buy and sell transactions will appear here as soon as you initiate one above.</p>
+            </div>
+
+            <div class="table-responsive d-none" id="txHistoryTableWrap">
+              <table class="table tx-history-table mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Asset</th>
+                    <th>Amount</th>
+                    <th>Naira Value</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="txHistoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let transactionMode = 'BUY';
+  const exchangeRates = { USDT: 1600, BTC: 110000000, ETH: 5800000 };
+  const mockWallets = {
+    USDT: "TYqgshmK93jNsHfjKwpA87HfkLs92HskWp",
+    BTC: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+    ETH: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+  };
+
+  // In-memory transaction history for this session.
+  // NOTE: this resets on page reload since it isn't persisted to a backend/database yet.
+  let transactionHistory = [];
+  let txIdCounter = 1;
+
+  // Preloader clear
+  window.addEventListener('load', () => {
+    setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
+  });
+
+  // Handle Switching tabs (Buy vs Sell UI adjustments)
+  function switchMode(mode) {
+    transactionMode = mode;
+    document.getElementById('tabBuy').classList.toggle('active', mode === 'BUY');
+    document.getElementById('tabSell').classList.toggle('active', mode === 'SELL');
+
+    document.getElementById('amountLabel').innerText = mode === 'BUY' ? `Crypto Amount to Buy` : `Crypto Amount to Send`;
+
+    // Adjust requirement parameters if user chooses to Buy (they don't supply destination bank info here for crypto buying)
+    const bankSelect = document.getElementById('bankName');
+    const acctInput = document.getElementById('accountNumber');
+    if (mode === 'BUY') {
+      document.getElementById('bankDetailsSection').style.opacity = '0.4';
+      bankSelect.removeAttribute('required');
+      acctInput.removeAttribute('required');
+      bankSelect.disabled = true;
+      acctInput.disabled = true;
+    } else {
+      document.getElementById('bankDetailsSection').style.opacity = '1';
+      bankSelect.setAttribute('required', 'true');
+      acctInput.setAttribute('required', 'true');
+      bankSelect.disabled = false;
+      acctInput.disabled = false;
+    }
+
+    calculateOutputs();
+  }
+
+  function updateLimits() {
+    const asset = document.getElementById('cryptoAsset').value;
+    document.getElementById('assetTicker').innerText = asset;
+    calculateOutputs();
+  }
+
+  function calculateOutputs() {
+    const asset = document.getElementById('cryptoAsset').value;
+    const amount = parseFloat(document.getElementById('cryptoAmount').value) || 0;
+    const rate = exchangeRates[asset];
+
+    const totalNaira = amount * rate;
+    document.getElementById('fiatOutput').innerText = `₦${totalNaira.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+  }
+
+  // Simulation event creating the tracking context lifecycle flow
+  function initiateExchange(event) {
+    event.preventDefault();
+
+    const asset = document.getElementById('cryptoAsset').value;
+    const amount = parseFloat(document.getElementById('cryptoAmount').value) || 0;
+    const rate = exchangeRates[asset];
+    const nairaValue = amount * rate;
+
+    // Hide default empty placeholder view, light up the live tracking system panels
+    document.getElementById('emptyTrackerState').classList.add('d-none');
+    document.getElementById('activeTrackerSection').classList.remove('d-none');
+
+    // Load custom dynamic context values into the QR Image API properties
+    const customQRData = `crypto:${mockWallets[asset]}?amount=${amount}`;
+    document.getElementById('paymentQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(customQRData)}`;
+    document.getElementById('walletAddressText').innerText = mockWallets[asset];
+
+    // Record this transaction in history
+    const record = {
+      id: txIdCounter++,
+      date: new Date(),
+      type: transactionMode,
+      asset: asset,
+      amount: amount,
+      nairaValue: nairaValue,
+      status: 'pending'
+    };
+    transactionHistory.unshift(record);
+    renderTransactionHistory();
+
+    // Begin standard lifecycle transition state progression loop simulation
+    simulateStepProgress(1, record.id);
+  }
+
+  function simulateStepProgress(step, txId) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById(`stateStep${i}`);
+      el.classList.remove('active', 'completed');
+      if (i < step) el.classList.add('completed');
+      else if (i === step) el.classList.add('active');
+    }
+
+    updateTransactionStatus(txId, step);
+
+    // Automatically transition stages using timeline timers to showcase tracking updates
+    if (step === 1) {
+      setTimeout(() => simulateStepProgress(2, txId), 6000); // Wait 6 seconds, simulate mempool block receipt
+    } else if (step === 2) {
+      setTimeout(() => simulateStepProgress(3, txId), 8000); // Wait 8 seconds, transition toward payroll gateway disbursement execution
+    } else if (step === 3) {
+      setTimeout(() => simulateStepProgress(4, txId), 5000); // Complete transaction chain setup
+    }
+  }
+
+  function updateTransactionStatus(txId, step) {
+    const record = transactionHistory.find(t => t.id === txId);
+    if (!record) return;
+    if (step <= 2) record.status = 'pending';
+    else if (step === 3) record.status = 'processing';
+    else record.status = 'completed';
+    renderTransactionHistory();
+  }
+
+  function renderTransactionHistory() {
+    const emptyState = document.getElementById('txHistoryEmpty');
+    const tableWrap = document.getElementById('txHistoryTableWrap');
+    const tbody = document.getElementById('txHistoryBody');
+    const countBadge = document.getElementById('txCountBadge');
+
+    countBadge.innerText = `${transactionHistory.length} transaction${transactionHistory.length === 1 ? '' : 's'}`;
+
+    if (transactionHistory.length === 0) {
+      emptyState.classList.remove('d-none');
+      tableWrap.classList.add('d-none');
+      return;
+    }
+
+    emptyState.classList.add('d-none');
+    tableWrap.classList.remove('d-none');
+
+    tbody.innerHTML = transactionHistory.map(tx => {
+      const dateStr = tx.date.toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeStr = tx.date.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' });
+      const typeLabel = tx.type === 'BUY' ? 'Buy' : 'Sell';
+      const typeIcon = tx.type === 'BUY' ? 'fa-arrow-down' : 'fa-arrow-up';
+      const statusLabel = tx.status.charAt(0).toUpperCase() + tx.status.slice(1);
+
+      return `
+        <tr>
+          <td>
+            <div class="tx-date-primary">${dateStr}</div>
+            <div class="tx-date-secondary">${timeStr}</div>
+          </td>
+          <td><span class="type-pill ${tx.type.toLowerCase()}"><i class="fas ${typeIcon}"></i>${typeLabel}</span></td>
+          <td>${tx.asset}</td>
+          <td>${tx.amount.toLocaleString('en-NG', { maximumFractionDigits: 8 })} ${tx.asset}</td>
+          <td>₦${tx.nairaValue.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</td>
+          <td><span class="status-pill ${tx.status}"><span class="dot"></span>${statusLabel}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+</script>
+
+</body>
+</html>
